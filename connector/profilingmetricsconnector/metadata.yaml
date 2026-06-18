@@ -47,6 +47,42 @@ attributes:
     requirement_level: conditionally_required
 
 metrics:
+  pprof.memory.allocated.bytes:
+    enabled: true
+    description: Total bytes allocated since program start.
+    unit: By
+    stability: development
+    sum:
+      value_type: int
+      aggregation_temporality: cumulative
+      monotonic: true
+
+  pprof.memory.allocated.objects:
+    enabled: true
+    description: Total number of objects allocated since program start.
+    unit: "1"
+    stability: development
+    sum:
+      value_type: int
+      aggregation_temporality: cumulative
+      monotonic: true
+
+  pprof.memory.inuse.bytes:
+    enabled: true
+    description: Bytes currently live in the heap.
+    unit: By
+    stability: development
+    gauge:
+      value_type: int
+
+  pprof.memory.inuse.objects:
+    enabled: true
+    description: Number of objects currently live in the heap.
+    unit: "1"
+    stability: development
+    gauge:
+      value_type: int
+
   samples.beam.count:
     enabled: true
     description: Number of samples executing Beam code (self)

@@ -1,6 +1,14 @@
 default:
 all_set:
   metrics:
+    pprof.memory.allocated.bytes:
+      enabled: true
+    pprof.memory.allocated.objects:
+      enabled: true
+    pprof.memory.inuse.bytes:
+      enabled: true
+    pprof.memory.inuse.objects:
+      enabled: true
     samples.beam.count:
       enabled: true
     samples.classification:
@@ -38,6 +46,14 @@ all_set:
       enabled: true
 reaggregate_set:
   metrics:
+    pprof.memory.allocated.bytes:
+      enabled: true
+    pprof.memory.allocated.objects:
+      enabled: true
+    pprof.memory.inuse.bytes:
+      enabled: true
+    pprof.memory.inuse.objects:
+      enabled: true
     samples.beam.count:
       enabled: true
     samples.classification:
@@ -75,6 +91,14 @@ reaggregate_set:
       enabled: true
 none_set:
   metrics:
+    pprof.memory.allocated.bytes:
+      enabled: false
+    pprof.memory.allocated.objects:
+      enabled: false
+    pprof.memory.inuse.bytes:
+      enabled: false
+    pprof.memory.inuse.objects:
+      enabled: false
     samples.beam.count:
       enabled: false
     samples.classification:

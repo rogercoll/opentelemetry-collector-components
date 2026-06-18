@@ -12,6 +12,38 @@ metrics:
     enabled: false
 ```
 
+### pprof.memory.allocated.bytes
+
+Total bytes allocated since program start.
+
+| Unit | Metric Type | Value Type | Aggregation Temporality | Monotonic | Stability |
+| ---- | ----------- | ---------- | ----------------------- | --------- | --------- |
+| By | Sum | Int | Cumulative | true | Development |
+
+### pprof.memory.allocated.objects
+
+Total number of objects allocated since program start.
+
+| Unit | Metric Type | Value Type | Aggregation Temporality | Monotonic | Stability |
+| ---- | ----------- | ---------- | ----------------------- | --------- | --------- |
+| 1 | Sum | Int | Cumulative | true | Development |
+
+### pprof.memory.inuse.bytes
+
+Bytes currently live in the heap.
+
+| Unit | Metric Type | Value Type | Stability |
+| ---- | ----------- | ---------- | --------- |
+| By | Gauge | Int | Development |
+
+### pprof.memory.inuse.objects
+
+Number of objects currently live in the heap.
+
+| Unit | Metric Type | Value Type | Stability |
+| ---- | ----------- | ---------- | --------- |
+| 1 | Gauge | Int | Development |
+
 ### samples.beam.count
 
 Number of samples executing Beam code (self)

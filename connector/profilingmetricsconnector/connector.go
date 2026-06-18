@@ -22,6 +22,7 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
+	"strings"
 
 	"github.com/elastic/opentelemetry-collector-components/connector/profilingmetricsconnector/internal/metadata"
 	"go.uber.org/zap"
@@ -131,7 +132,12 @@ func (c *profilesToMetricsConnector) extractMetricsFromProfiles(ctx context.Cont
 		scopeProfiles := resourceProfile.ScopeProfiles().All()
 		for _, scopeProfile := range scopeProfiles {
 			// Extract metrics from profiles in this scope
-			c.extractMetricsFromScopeProfiles(dictionary, scopeProfile)
+			c.logger.Warn(fmt.Sprintf("scope name: %s\n", scopeProfile.Scope().Name()))
+			if strings.Contains(scopeProfile.Scope().Name(), "pprof") {
+				c.extractMetricsFromPprofProfiles(dictionary, scopeProfile)
+			} else {
+				c.extractMetricsFromScopeProfiles(dictionary, scopeProfile)
+			}
 		}
 
 		err := c.nextConsumer.ConsumeMetrics(ctx, c.mb.Emit(metadata.WithResource(resourceProfile.Resource())))
@@ -140,6 +146,37 @@ func (c *profilesToMetricsConnector) extractMetricsFromProfiles(ctx context.Cont
 		}
 	}
 	return nil
+}
+
+func (c *profilesToMetricsConnector) extractMetricsFromPprofProfiles(dictionary pprofile.ProfilesDictionary, scopeProfile pprofile.ScopeProfiles) {
+	for _, profile := range scopeProfile.Profiles().All() {
+		st := profile.SampleType()
+		typStr := dictionary.StringTable().At(int(st.TypeStrindex()))
+
+		var record func(pcommon.Timestamp, int64)
+
+		switch typStr {
+		case "alloc_objects":
+			record = c.mb.RecordPprofMemoryAllocatedObjectsDataPoint
+		case "alloc_space":
+			record = c.mb.RecordPprofMemoryAllocatedBytesDataPoint
+		case "inuse_objects":
+			record = c.mb.RecordPprofMemoryInuseObjectsDataPoint
+		case "inuse_space":
+			record = c.mb.RecordPprofMemoryInuseBytesDataPoint
+		default:
+			continue
+		}
+
+		var total int64
+		for _, sample := range profile.Samples().All() {
+			if sample.Values().Len() > 0 {
+				total += sample.Values().At(0)
+			}
+		}
+
+		record(profile.Time(), total)
+	}
 }
 
 // extractMetricsFromScopeProfiles extracts basic metrics from scope-level profile data.
