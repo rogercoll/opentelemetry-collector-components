@@ -8,6 +8,66 @@ import (
 	"go.opentelemetry.io/collector/confmap"
 )
 
+// PprofBlockContentionsMetricConfig provides config for the pprof.block.contentions metric.
+type PprofBlockContentionsMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+}
+
+func (ms *PprofBlockContentionsMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
+// PprofBlockDelayMetricConfig provides config for the pprof.block.delay metric.
+type PprofBlockDelayMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+}
+
+func (ms *PprofBlockDelayMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
+// PprofCPUUtilizationMetricConfig provides config for the pprof.cpu.utilization metric.
+type PprofCPUUtilizationMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+}
+
+func (ms *PprofCPUUtilizationMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
 // PprofMemoryAllocatedBytesMetricConfig provides config for the pprof.memory.allocated.bytes metric.
 type PprofMemoryAllocatedBytesMetricConfig struct {
 	Enabled          bool `mapstructure:"enabled"`
@@ -48,6 +108,26 @@ func (ms *PprofMemoryAllocatedObjectsMetricConfig) Unmarshal(parser *confmap.Con
 	return nil
 }
 
+// PprofMemoryHeapFragmentationMetricConfig provides config for the pprof.memory.heap.fragmentation metric.
+type PprofMemoryHeapFragmentationMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+}
+
+func (ms *PprofMemoryHeapFragmentationMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
 // PprofMemoryInuseBytesMetricConfig provides config for the pprof.memory.inuse.bytes metric.
 type PprofMemoryInuseBytesMetricConfig struct {
 	Enabled          bool `mapstructure:"enabled"`
@@ -75,6 +155,26 @@ type PprofMemoryInuseObjectsMetricConfig struct {
 }
 
 func (ms *PprofMemoryInuseObjectsMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
+// PprofMemoryObjectAvgSizeMetricConfig provides config for the pprof.memory.object.avg_size metric.
+type PprofMemoryObjectAvgSizeMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+}
+
+func (ms *PprofMemoryObjectAvgSizeMetricConfig) Unmarshal(parser *confmap.Conf) error {
 	if parser == nil {
 		return nil
 	}
@@ -498,41 +598,61 @@ func (ms *SamplesV8jsCountMetricConfig) Unmarshal(parser *confmap.Conf) error {
 
 // MetricsConfig provides config for profilingmetrics metrics.
 type MetricsConfig struct {
-	PprofMemoryAllocatedBytes   PprofMemoryAllocatedBytesMetricConfig   `mapstructure:"pprof.memory.allocated.bytes"`
-	PprofMemoryAllocatedObjects PprofMemoryAllocatedObjectsMetricConfig `mapstructure:"pprof.memory.allocated.objects"`
-	PprofMemoryInuseBytes       PprofMemoryInuseBytesMetricConfig       `mapstructure:"pprof.memory.inuse.bytes"`
-	PprofMemoryInuseObjects     PprofMemoryInuseObjectsMetricConfig     `mapstructure:"pprof.memory.inuse.objects"`
-	SamplesBeamCount            SamplesBeamCountMetricConfig            `mapstructure:"samples.beam.count"`
-	SamplesClassification       SamplesClassificationMetricConfig       `mapstructure:"samples.classification"`
-	SamplesCpythonCount         SamplesCpythonCountMetricConfig         `mapstructure:"samples.cpython.count"`
-	SamplesCustomAggregation    SamplesCustomAggregationMetricConfig    `mapstructure:"samples.custom_aggregation"`
-	SamplesDotnetCount          SamplesDotnetCountMetricConfig          `mapstructure:"samples.dotnet.count"`
-	SamplesFrameType            SamplesFrameTypeMetricConfig            `mapstructure:"samples.frame_type"`
-	SamplesGoCount              SamplesGoCountMetricConfig              `mapstructure:"samples.go.count"`
-	SamplesJvmCount             SamplesJvmCountMetricConfig             `mapstructure:"samples.jvm.count"`
-	SamplesKernelCount          SamplesKernelCountMetricConfig          `mapstructure:"samples.kernel.count"`
-	SamplesNativeCount          SamplesNativeCountMetricConfig          `mapstructure:"samples.native.count"`
-	SamplesPerlCount            SamplesPerlCountMetricConfig            `mapstructure:"samples.perl.count"`
-	SamplesPhpCount             SamplesPhpCountMetricConfig             `mapstructure:"samples.php.count"`
-	SamplesRubyCount            SamplesRubyCountMetricConfig            `mapstructure:"samples.ruby.count"`
-	SamplesRustCount            SamplesRustCountMetricConfig            `mapstructure:"samples.rust.count"`
-	SamplesUserCount            SamplesUserCountMetricConfig            `mapstructure:"samples.user.count"`
-	SamplesV8jsCount            SamplesV8jsCountMetricConfig            `mapstructure:"samples.v8js.count"`
+	PprofBlockContentions        PprofBlockContentionsMetricConfig        `mapstructure:"pprof.block.contentions"`
+	PprofBlockDelay              PprofBlockDelayMetricConfig              `mapstructure:"pprof.block.delay"`
+	PprofCPUUtilization          PprofCPUUtilizationMetricConfig          `mapstructure:"pprof.cpu.utilization"`
+	PprofMemoryAllocatedBytes    PprofMemoryAllocatedBytesMetricConfig    `mapstructure:"pprof.memory.allocated.bytes"`
+	PprofMemoryAllocatedObjects  PprofMemoryAllocatedObjectsMetricConfig  `mapstructure:"pprof.memory.allocated.objects"`
+	PprofMemoryHeapFragmentation PprofMemoryHeapFragmentationMetricConfig `mapstructure:"pprof.memory.heap.fragmentation"`
+	PprofMemoryInuseBytes        PprofMemoryInuseBytesMetricConfig        `mapstructure:"pprof.memory.inuse.bytes"`
+	PprofMemoryInuseObjects      PprofMemoryInuseObjectsMetricConfig      `mapstructure:"pprof.memory.inuse.objects"`
+	PprofMemoryObjectAvgSize     PprofMemoryObjectAvgSizeMetricConfig     `mapstructure:"pprof.memory.object.avg_size"`
+	SamplesBeamCount             SamplesBeamCountMetricConfig             `mapstructure:"samples.beam.count"`
+	SamplesClassification        SamplesClassificationMetricConfig        `mapstructure:"samples.classification"`
+	SamplesCpythonCount          SamplesCpythonCountMetricConfig          `mapstructure:"samples.cpython.count"`
+	SamplesCustomAggregation     SamplesCustomAggregationMetricConfig     `mapstructure:"samples.custom_aggregation"`
+	SamplesDotnetCount           SamplesDotnetCountMetricConfig           `mapstructure:"samples.dotnet.count"`
+	SamplesFrameType             SamplesFrameTypeMetricConfig             `mapstructure:"samples.frame_type"`
+	SamplesGoCount               SamplesGoCountMetricConfig               `mapstructure:"samples.go.count"`
+	SamplesJvmCount              SamplesJvmCountMetricConfig              `mapstructure:"samples.jvm.count"`
+	SamplesKernelCount           SamplesKernelCountMetricConfig           `mapstructure:"samples.kernel.count"`
+	SamplesNativeCount           SamplesNativeCountMetricConfig           `mapstructure:"samples.native.count"`
+	SamplesPerlCount             SamplesPerlCountMetricConfig             `mapstructure:"samples.perl.count"`
+	SamplesPhpCount              SamplesPhpCountMetricConfig              `mapstructure:"samples.php.count"`
+	SamplesRubyCount             SamplesRubyCountMetricConfig             `mapstructure:"samples.ruby.count"`
+	SamplesRustCount             SamplesRustCountMetricConfig             `mapstructure:"samples.rust.count"`
+	SamplesUserCount             SamplesUserCountMetricConfig             `mapstructure:"samples.user.count"`
+	SamplesV8jsCount             SamplesV8jsCountMetricConfig             `mapstructure:"samples.v8js.count"`
 }
 
 func DefaultMetricsConfig() MetricsConfig {
 	return MetricsConfig{
+		PprofBlockContentions: PprofBlockContentionsMetricConfig{
+			Enabled: false,
+		},
+		PprofBlockDelay: PprofBlockDelayMetricConfig{
+			Enabled: false,
+		},
+		PprofCPUUtilization: PprofCPUUtilizationMetricConfig{
+			Enabled: true,
+		},
 		PprofMemoryAllocatedBytes: PprofMemoryAllocatedBytesMetricConfig{
 			Enabled: true,
 		},
 		PprofMemoryAllocatedObjects: PprofMemoryAllocatedObjectsMetricConfig{
 			Enabled: true,
 		},
+		PprofMemoryHeapFragmentation: PprofMemoryHeapFragmentationMetricConfig{
+			Enabled: false,
+		},
 		PprofMemoryInuseBytes: PprofMemoryInuseBytesMetricConfig{
 			Enabled: true,
 		},
 		PprofMemoryInuseObjects: PprofMemoryInuseObjectsMetricConfig{
 			Enabled: true,
+		},
+		PprofMemoryObjectAvgSize: PprofMemoryObjectAvgSizeMetricConfig{
+			Enabled: false,
 		},
 		SamplesBeamCount: SamplesBeamCountMetricConfig{
 			Enabled: true,

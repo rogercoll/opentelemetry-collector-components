@@ -20,17 +20,32 @@ const (
 )
 
 var MetricsInfo = metricsInfo{
+	PprofBlockContentions: metricInfo{
+		Name: "pprof.block.contentions",
+	},
+	PprofBlockDelay: metricInfo{
+		Name: "pprof.block.delay",
+	},
+	PprofCPUUtilization: metricInfo{
+		Name: "pprof.cpu.utilization",
+	},
 	PprofMemoryAllocatedBytes: metricInfo{
 		Name: "pprof.memory.allocated.bytes",
 	},
 	PprofMemoryAllocatedObjects: metricInfo{
 		Name: "pprof.memory.allocated.objects",
 	},
+	PprofMemoryHeapFragmentation: metricInfo{
+		Name: "pprof.memory.heap.fragmentation",
+	},
 	PprofMemoryInuseBytes: metricInfo{
 		Name: "pprof.memory.inuse.bytes",
 	},
 	PprofMemoryInuseObjects: metricInfo{
 		Name: "pprof.memory.inuse.objects",
+	},
+	PprofMemoryObjectAvgSize: metricInfo{
+		Name: "pprof.memory.object.avg_size",
 	},
 	SamplesBeamCount: metricInfo{
 		Name: "samples.beam.count",
@@ -83,26 +98,31 @@ var MetricsInfo = metricsInfo{
 }
 
 type metricsInfo struct {
-	PprofMemoryAllocatedBytes   metricInfo
-	PprofMemoryAllocatedObjects metricInfo
-	PprofMemoryInuseBytes       metricInfo
-	PprofMemoryInuseObjects     metricInfo
-	SamplesBeamCount            metricInfo
-	SamplesClassification       metricInfo
-	SamplesCpythonCount         metricInfo
-	SamplesCustomAggregation    metricInfo
-	SamplesDotnetCount          metricInfo
-	SamplesFrameType            metricInfo
-	SamplesGoCount              metricInfo
-	SamplesJvmCount             metricInfo
-	SamplesKernelCount          metricInfo
-	SamplesNativeCount          metricInfo
-	SamplesPerlCount            metricInfo
-	SamplesPhpCount             metricInfo
-	SamplesRubyCount            metricInfo
-	SamplesRustCount            metricInfo
-	SamplesUserCount            metricInfo
-	SamplesV8jsCount            metricInfo
+	PprofBlockContentions        metricInfo
+	PprofBlockDelay              metricInfo
+	PprofCPUUtilization          metricInfo
+	PprofMemoryAllocatedBytes    metricInfo
+	PprofMemoryAllocatedObjects  metricInfo
+	PprofMemoryHeapFragmentation metricInfo
+	PprofMemoryInuseBytes        metricInfo
+	PprofMemoryInuseObjects      metricInfo
+	PprofMemoryObjectAvgSize     metricInfo
+	SamplesBeamCount             metricInfo
+	SamplesClassification        metricInfo
+	SamplesCpythonCount          metricInfo
+	SamplesCustomAggregation     metricInfo
+	SamplesDotnetCount           metricInfo
+	SamplesFrameType             metricInfo
+	SamplesGoCount               metricInfo
+	SamplesJvmCount              metricInfo
+	SamplesKernelCount           metricInfo
+	SamplesNativeCount           metricInfo
+	SamplesPerlCount             metricInfo
+	SamplesPhpCount              metricInfo
+	SamplesRubyCount             metricInfo
+	SamplesRustCount             metricInfo
+	SamplesUserCount             metricInfo
+	SamplesV8jsCount             metricInfo
 }
 
 type metricInfo struct {
@@ -147,6 +167,160 @@ func WithSyscallNameMetricAttribute(syscallNameAttributeValue string) MetricAttr
 	return metricAttributeOptionFunc(func(dp pmetric.NumberDataPoint) {
 		dp.Attributes().PutStr("syscall_name", syscallNameAttributeValue)
 	})
+}
+
+type metricPprofBlockContentions struct {
+	data     pmetric.Metric                    // data buffer for generated metric.
+	config   PprofBlockContentionsMetricConfig // metric config provided by user.
+	capacity int                               // max observed number of data points added to the metric.
+}
+
+// init fills pprof.block.contentions metric with initial data.
+func (m *metricPprofBlockContentions) init() {
+	m.data.SetName("pprof.block.contentions")
+	m.data.SetDescription("Total number of lock contention events since program start.")
+	m.data.SetUnit("1")
+	m.data.SetEmptySum()
+	m.data.Sum().SetIsMonotonic(true)
+	m.data.Sum().SetAggregationTemporality(pmetric.AggregationTemporalityCumulative)
+}
+
+func (m *metricPprofBlockContentions) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val int64) {
+	if !m.config.Enabled {
+		return
+	}
+	dp := m.data.Sum().DataPoints().AppendEmpty()
+	dp.SetStartTimestamp(start)
+	dp.SetTimestamp(ts)
+	dp.SetIntValue(val)
+}
+
+// updateCapacity saves max length of data point slices that will be used for the slice capacity.
+func (m *metricPprofBlockContentions) updateCapacity() {
+	if m.data.Sum().DataPoints().Len() > m.capacity {
+		m.capacity = m.data.Sum().DataPoints().Len()
+	}
+}
+
+// emit appends recorded metric data to a metrics slice and prepares it for recording another set of data points.
+func (m *metricPprofBlockContentions) emit(metrics pmetric.MetricSlice) {
+	if m.config.Enabled && m.data.Sum().DataPoints().Len() > 0 {
+		m.updateCapacity()
+		m.data.MoveTo(metrics.AppendEmpty())
+		m.init()
+	}
+}
+
+func newMetricPprofBlockContentions(cfg PprofBlockContentionsMetricConfig) metricPprofBlockContentions {
+	m := metricPprofBlockContentions{config: cfg}
+
+	if cfg.Enabled {
+		m.data = pmetric.NewMetric()
+		m.init()
+	}
+	return m
+}
+
+type metricPprofBlockDelay struct {
+	data     pmetric.Metric              // data buffer for generated metric.
+	config   PprofBlockDelayMetricConfig // metric config provided by user.
+	capacity int                         // max observed number of data points added to the metric.
+}
+
+// init fills pprof.block.delay metric with initial data.
+func (m *metricPprofBlockDelay) init() {
+	m.data.SetName("pprof.block.delay")
+	m.data.SetDescription("Total time spent blocked on locks since program start.")
+	m.data.SetUnit("ns")
+	m.data.SetEmptySum()
+	m.data.Sum().SetIsMonotonic(true)
+	m.data.Sum().SetAggregationTemporality(pmetric.AggregationTemporalityCumulative)
+}
+
+func (m *metricPprofBlockDelay) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val int64) {
+	if !m.config.Enabled {
+		return
+	}
+	dp := m.data.Sum().DataPoints().AppendEmpty()
+	dp.SetStartTimestamp(start)
+	dp.SetTimestamp(ts)
+	dp.SetIntValue(val)
+}
+
+// updateCapacity saves max length of data point slices that will be used for the slice capacity.
+func (m *metricPprofBlockDelay) updateCapacity() {
+	if m.data.Sum().DataPoints().Len() > m.capacity {
+		m.capacity = m.data.Sum().DataPoints().Len()
+	}
+}
+
+// emit appends recorded metric data to a metrics slice and prepares it for recording another set of data points.
+func (m *metricPprofBlockDelay) emit(metrics pmetric.MetricSlice) {
+	if m.config.Enabled && m.data.Sum().DataPoints().Len() > 0 {
+		m.updateCapacity()
+		m.data.MoveTo(metrics.AppendEmpty())
+		m.init()
+	}
+}
+
+func newMetricPprofBlockDelay(cfg PprofBlockDelayMetricConfig) metricPprofBlockDelay {
+	m := metricPprofBlockDelay{config: cfg}
+
+	if cfg.Enabled {
+		m.data = pmetric.NewMetric()
+		m.init()
+	}
+	return m
+}
+
+type metricPprofCPUUtilization struct {
+	data     pmetric.Metric                  // data buffer for generated metric.
+	config   PprofCPUUtilizationMetricConfig // metric config provided by user.
+	capacity int                             // max observed number of data points added to the metric.
+}
+
+// init fills pprof.cpu.utilization metric with initial data.
+func (m *metricPprofCPUUtilization) init() {
+	m.data.SetName("pprof.cpu.utilization")
+	m.data.SetDescription("Fraction of wall time spent on CPU during the profiling window.")
+	m.data.SetUnit("1")
+	m.data.SetEmptyGauge()
+}
+
+func (m *metricPprofCPUUtilization) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val float64) {
+	if !m.config.Enabled {
+		return
+	}
+	dp := m.data.Gauge().DataPoints().AppendEmpty()
+	dp.SetStartTimestamp(start)
+	dp.SetTimestamp(ts)
+	dp.SetDoubleValue(val)
+}
+
+// updateCapacity saves max length of data point slices that will be used for the slice capacity.
+func (m *metricPprofCPUUtilization) updateCapacity() {
+	if m.data.Gauge().DataPoints().Len() > m.capacity {
+		m.capacity = m.data.Gauge().DataPoints().Len()
+	}
+}
+
+// emit appends recorded metric data to a metrics slice and prepares it for recording another set of data points.
+func (m *metricPprofCPUUtilization) emit(metrics pmetric.MetricSlice) {
+	if m.config.Enabled && m.data.Gauge().DataPoints().Len() > 0 {
+		m.updateCapacity()
+		m.data.MoveTo(metrics.AppendEmpty())
+		m.init()
+	}
+}
+
+func newMetricPprofCPUUtilization(cfg PprofCPUUtilizationMetricConfig) metricPprofCPUUtilization {
+	m := metricPprofCPUUtilization{config: cfg}
+
+	if cfg.Enabled {
+		m.data = pmetric.NewMetric()
+		m.init()
+	}
+	return m
 }
 
 type metricPprofMemoryAllocatedBytes struct {
@@ -253,6 +427,56 @@ func newMetricPprofMemoryAllocatedObjects(cfg PprofMemoryAllocatedObjectsMetricC
 	return m
 }
 
+type metricPprofMemoryHeapFragmentation struct {
+	data     pmetric.Metric                           // data buffer for generated metric.
+	config   PprofMemoryHeapFragmentationMetricConfig // metric config provided by user.
+	capacity int                                      // max observed number of data points added to the metric.
+}
+
+// init fills pprof.memory.heap.fragmentation metric with initial data.
+func (m *metricPprofMemoryHeapFragmentation) init() {
+	m.data.SetName("pprof.memory.heap.fragmentation")
+	m.data.SetDescription("Ratio of live heap bytes to total allocated bytes. Trending toward 1 indicates a potential memory leak.")
+	m.data.SetUnit("1")
+	m.data.SetEmptyGauge()
+}
+
+func (m *metricPprofMemoryHeapFragmentation) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val float64) {
+	if !m.config.Enabled {
+		return
+	}
+	dp := m.data.Gauge().DataPoints().AppendEmpty()
+	dp.SetStartTimestamp(start)
+	dp.SetTimestamp(ts)
+	dp.SetDoubleValue(val)
+}
+
+// updateCapacity saves max length of data point slices that will be used for the slice capacity.
+func (m *metricPprofMemoryHeapFragmentation) updateCapacity() {
+	if m.data.Gauge().DataPoints().Len() > m.capacity {
+		m.capacity = m.data.Gauge().DataPoints().Len()
+	}
+}
+
+// emit appends recorded metric data to a metrics slice and prepares it for recording another set of data points.
+func (m *metricPprofMemoryHeapFragmentation) emit(metrics pmetric.MetricSlice) {
+	if m.config.Enabled && m.data.Gauge().DataPoints().Len() > 0 {
+		m.updateCapacity()
+		m.data.MoveTo(metrics.AppendEmpty())
+		m.init()
+	}
+}
+
+func newMetricPprofMemoryHeapFragmentation(cfg PprofMemoryHeapFragmentationMetricConfig) metricPprofMemoryHeapFragmentation {
+	m := metricPprofMemoryHeapFragmentation{config: cfg}
+
+	if cfg.Enabled {
+		m.data = pmetric.NewMetric()
+		m.init()
+	}
+	return m
+}
+
 type metricPprofMemoryInuseBytes struct {
 	data     pmetric.Metric                    // data buffer for generated metric.
 	config   PprofMemoryInuseBytesMetricConfig // metric config provided by user.
@@ -345,6 +569,56 @@ func (m *metricPprofMemoryInuseObjects) emit(metrics pmetric.MetricSlice) {
 
 func newMetricPprofMemoryInuseObjects(cfg PprofMemoryInuseObjectsMetricConfig) metricPprofMemoryInuseObjects {
 	m := metricPprofMemoryInuseObjects{config: cfg}
+
+	if cfg.Enabled {
+		m.data = pmetric.NewMetric()
+		m.init()
+	}
+	return m
+}
+
+type metricPprofMemoryObjectAvgSize struct {
+	data     pmetric.Metric                       // data buffer for generated metric.
+	config   PprofMemoryObjectAvgSizeMetricConfig // metric config provided by user.
+	capacity int                                  // max observed number of data points added to the metric.
+}
+
+// init fills pprof.memory.object.avg_size metric with initial data.
+func (m *metricPprofMemoryObjectAvgSize) init() {
+	m.data.SetName("pprof.memory.object.avg_size")
+	m.data.SetDescription("Average size in bytes of live heap objects.")
+	m.data.SetUnit("By")
+	m.data.SetEmptyGauge()
+}
+
+func (m *metricPprofMemoryObjectAvgSize) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val float64) {
+	if !m.config.Enabled {
+		return
+	}
+	dp := m.data.Gauge().DataPoints().AppendEmpty()
+	dp.SetStartTimestamp(start)
+	dp.SetTimestamp(ts)
+	dp.SetDoubleValue(val)
+}
+
+// updateCapacity saves max length of data point slices that will be used for the slice capacity.
+func (m *metricPprofMemoryObjectAvgSize) updateCapacity() {
+	if m.data.Gauge().DataPoints().Len() > m.capacity {
+		m.capacity = m.data.Gauge().DataPoints().Len()
+	}
+}
+
+// emit appends recorded metric data to a metrics slice and prepares it for recording another set of data points.
+func (m *metricPprofMemoryObjectAvgSize) emit(metrics pmetric.MetricSlice) {
+	if m.config.Enabled && m.data.Gauge().DataPoints().Len() > 0 {
+		m.updateCapacity()
+		m.data.MoveTo(metrics.AppendEmpty())
+		m.init()
+	}
+}
+
+func newMetricPprofMemoryObjectAvgSize(cfg PprofMemoryObjectAvgSizeMetricConfig) metricPprofMemoryObjectAvgSize {
+	m := metricPprofMemoryObjectAvgSize{config: cfg}
 
 	if cfg.Enabled {
 		m.data = pmetric.NewMetric()
@@ -1319,31 +1593,36 @@ func newMetricSamplesV8jsCount(cfg SamplesV8jsCountMetricConfig) metricSamplesV8
 // MetricsBuilder provides an interface for scrapers to report metrics while taking care of all the transformations
 // required to produce metric representation defined in metadata and user config.
 type MetricsBuilder struct {
-	config                            MetricsBuilderConfig // config of the metrics builder.
-	startTime                         pcommon.Timestamp    // start time that will be applied to all recorded data points.
-	metricsCapacity                   int                  // maximum observed number of metrics per resource.
-	metricsBuffer                     pmetric.Metrics      // accumulates metrics data before emitting.
-	buildInfo                         component.BuildInfo  // contains version information.
-	metricPprofMemoryAllocatedBytes   metricPprofMemoryAllocatedBytes
-	metricPprofMemoryAllocatedObjects metricPprofMemoryAllocatedObjects
-	metricPprofMemoryInuseBytes       metricPprofMemoryInuseBytes
-	metricPprofMemoryInuseObjects     metricPprofMemoryInuseObjects
-	metricSamplesBeamCount            metricSamplesBeamCount
-	metricSamplesClassification       metricSamplesClassification
-	metricSamplesCpythonCount         metricSamplesCpythonCount
-	metricSamplesCustomAggregation    metricSamplesCustomAggregation
-	metricSamplesDotnetCount          metricSamplesDotnetCount
-	metricSamplesFrameType            metricSamplesFrameType
-	metricSamplesGoCount              metricSamplesGoCount
-	metricSamplesJvmCount             metricSamplesJvmCount
-	metricSamplesKernelCount          metricSamplesKernelCount
-	metricSamplesNativeCount          metricSamplesNativeCount
-	metricSamplesPerlCount            metricSamplesPerlCount
-	metricSamplesPhpCount             metricSamplesPhpCount
-	metricSamplesRubyCount            metricSamplesRubyCount
-	metricSamplesRustCount            metricSamplesRustCount
-	metricSamplesUserCount            metricSamplesUserCount
-	metricSamplesV8jsCount            metricSamplesV8jsCount
+	config                             MetricsBuilderConfig // config of the metrics builder.
+	startTime                          pcommon.Timestamp    // start time that will be applied to all recorded data points.
+	metricsCapacity                    int                  // maximum observed number of metrics per resource.
+	metricsBuffer                      pmetric.Metrics      // accumulates metrics data before emitting.
+	buildInfo                          component.BuildInfo  // contains version information.
+	metricPprofBlockContentions        metricPprofBlockContentions
+	metricPprofBlockDelay              metricPprofBlockDelay
+	metricPprofCPUUtilization          metricPprofCPUUtilization
+	metricPprofMemoryAllocatedBytes    metricPprofMemoryAllocatedBytes
+	metricPprofMemoryAllocatedObjects  metricPprofMemoryAllocatedObjects
+	metricPprofMemoryHeapFragmentation metricPprofMemoryHeapFragmentation
+	metricPprofMemoryInuseBytes        metricPprofMemoryInuseBytes
+	metricPprofMemoryInuseObjects      metricPprofMemoryInuseObjects
+	metricPprofMemoryObjectAvgSize     metricPprofMemoryObjectAvgSize
+	metricSamplesBeamCount             metricSamplesBeamCount
+	metricSamplesClassification        metricSamplesClassification
+	metricSamplesCpythonCount          metricSamplesCpythonCount
+	metricSamplesCustomAggregation     metricSamplesCustomAggregation
+	metricSamplesDotnetCount           metricSamplesDotnetCount
+	metricSamplesFrameType             metricSamplesFrameType
+	metricSamplesGoCount               metricSamplesGoCount
+	metricSamplesJvmCount              metricSamplesJvmCount
+	metricSamplesKernelCount           metricSamplesKernelCount
+	metricSamplesNativeCount           metricSamplesNativeCount
+	metricSamplesPerlCount             metricSamplesPerlCount
+	metricSamplesPhpCount              metricSamplesPhpCount
+	metricSamplesRubyCount             metricSamplesRubyCount
+	metricSamplesRustCount             metricSamplesRustCount
+	metricSamplesUserCount             metricSamplesUserCount
+	metricSamplesV8jsCount             metricSamplesV8jsCount
 }
 
 // MetricBuilderOption applies changes to default metrics builder.
@@ -1365,30 +1644,35 @@ func WithStartTime(startTime pcommon.Timestamp) MetricBuilderOption {
 }
 func NewMetricsBuilder(mbc MetricsBuilderConfig, settings connector.Settings, options ...MetricBuilderOption) *MetricsBuilder {
 	mb := &MetricsBuilder{
-		config:                            mbc,
-		startTime:                         pcommon.NewTimestampFromTime(time.Now()),
-		metricsBuffer:                     pmetric.NewMetrics(),
-		buildInfo:                         settings.BuildInfo,
-		metricPprofMemoryAllocatedBytes:   newMetricPprofMemoryAllocatedBytes(mbc.Metrics.PprofMemoryAllocatedBytes),
-		metricPprofMemoryAllocatedObjects: newMetricPprofMemoryAllocatedObjects(mbc.Metrics.PprofMemoryAllocatedObjects),
-		metricPprofMemoryInuseBytes:       newMetricPprofMemoryInuseBytes(mbc.Metrics.PprofMemoryInuseBytes),
-		metricPprofMemoryInuseObjects:     newMetricPprofMemoryInuseObjects(mbc.Metrics.PprofMemoryInuseObjects),
-		metricSamplesBeamCount:            newMetricSamplesBeamCount(mbc.Metrics.SamplesBeamCount),
-		metricSamplesClassification:       newMetricSamplesClassification(mbc.Metrics.SamplesClassification),
-		metricSamplesCpythonCount:         newMetricSamplesCpythonCount(mbc.Metrics.SamplesCpythonCount),
-		metricSamplesCustomAggregation:    newMetricSamplesCustomAggregation(mbc.Metrics.SamplesCustomAggregation),
-		metricSamplesDotnetCount:          newMetricSamplesDotnetCount(mbc.Metrics.SamplesDotnetCount),
-		metricSamplesFrameType:            newMetricSamplesFrameType(mbc.Metrics.SamplesFrameType),
-		metricSamplesGoCount:              newMetricSamplesGoCount(mbc.Metrics.SamplesGoCount),
-		metricSamplesJvmCount:             newMetricSamplesJvmCount(mbc.Metrics.SamplesJvmCount),
-		metricSamplesKernelCount:          newMetricSamplesKernelCount(mbc.Metrics.SamplesKernelCount),
-		metricSamplesNativeCount:          newMetricSamplesNativeCount(mbc.Metrics.SamplesNativeCount),
-		metricSamplesPerlCount:            newMetricSamplesPerlCount(mbc.Metrics.SamplesPerlCount),
-		metricSamplesPhpCount:             newMetricSamplesPhpCount(mbc.Metrics.SamplesPhpCount),
-		metricSamplesRubyCount:            newMetricSamplesRubyCount(mbc.Metrics.SamplesRubyCount),
-		metricSamplesRustCount:            newMetricSamplesRustCount(mbc.Metrics.SamplesRustCount),
-		metricSamplesUserCount:            newMetricSamplesUserCount(mbc.Metrics.SamplesUserCount),
-		metricSamplesV8jsCount:            newMetricSamplesV8jsCount(mbc.Metrics.SamplesV8jsCount),
+		config:                             mbc,
+		startTime:                          pcommon.NewTimestampFromTime(time.Now()),
+		metricsBuffer:                      pmetric.NewMetrics(),
+		buildInfo:                          settings.BuildInfo,
+		metricPprofBlockContentions:        newMetricPprofBlockContentions(mbc.Metrics.PprofBlockContentions),
+		metricPprofBlockDelay:              newMetricPprofBlockDelay(mbc.Metrics.PprofBlockDelay),
+		metricPprofCPUUtilization:          newMetricPprofCPUUtilization(mbc.Metrics.PprofCPUUtilization),
+		metricPprofMemoryAllocatedBytes:    newMetricPprofMemoryAllocatedBytes(mbc.Metrics.PprofMemoryAllocatedBytes),
+		metricPprofMemoryAllocatedObjects:  newMetricPprofMemoryAllocatedObjects(mbc.Metrics.PprofMemoryAllocatedObjects),
+		metricPprofMemoryHeapFragmentation: newMetricPprofMemoryHeapFragmentation(mbc.Metrics.PprofMemoryHeapFragmentation),
+		metricPprofMemoryInuseBytes:        newMetricPprofMemoryInuseBytes(mbc.Metrics.PprofMemoryInuseBytes),
+		metricPprofMemoryInuseObjects:      newMetricPprofMemoryInuseObjects(mbc.Metrics.PprofMemoryInuseObjects),
+		metricPprofMemoryObjectAvgSize:     newMetricPprofMemoryObjectAvgSize(mbc.Metrics.PprofMemoryObjectAvgSize),
+		metricSamplesBeamCount:             newMetricSamplesBeamCount(mbc.Metrics.SamplesBeamCount),
+		metricSamplesClassification:        newMetricSamplesClassification(mbc.Metrics.SamplesClassification),
+		metricSamplesCpythonCount:          newMetricSamplesCpythonCount(mbc.Metrics.SamplesCpythonCount),
+		metricSamplesCustomAggregation:     newMetricSamplesCustomAggregation(mbc.Metrics.SamplesCustomAggregation),
+		metricSamplesDotnetCount:           newMetricSamplesDotnetCount(mbc.Metrics.SamplesDotnetCount),
+		metricSamplesFrameType:             newMetricSamplesFrameType(mbc.Metrics.SamplesFrameType),
+		metricSamplesGoCount:               newMetricSamplesGoCount(mbc.Metrics.SamplesGoCount),
+		metricSamplesJvmCount:              newMetricSamplesJvmCount(mbc.Metrics.SamplesJvmCount),
+		metricSamplesKernelCount:           newMetricSamplesKernelCount(mbc.Metrics.SamplesKernelCount),
+		metricSamplesNativeCount:           newMetricSamplesNativeCount(mbc.Metrics.SamplesNativeCount),
+		metricSamplesPerlCount:             newMetricSamplesPerlCount(mbc.Metrics.SamplesPerlCount),
+		metricSamplesPhpCount:              newMetricSamplesPhpCount(mbc.Metrics.SamplesPhpCount),
+		metricSamplesRubyCount:             newMetricSamplesRubyCount(mbc.Metrics.SamplesRubyCount),
+		metricSamplesRustCount:             newMetricSamplesRustCount(mbc.Metrics.SamplesRustCount),
+		metricSamplesUserCount:             newMetricSamplesUserCount(mbc.Metrics.SamplesUserCount),
+		metricSamplesV8jsCount:             newMetricSamplesV8jsCount(mbc.Metrics.SamplesV8jsCount),
 	}
 
 	for _, op := range options {
@@ -1454,10 +1738,15 @@ func (mb *MetricsBuilder) EmitForResource(options ...ResourceMetricsOption) {
 	ils.Scope().SetName(ScopeName)
 	ils.Scope().SetVersion(mb.buildInfo.Version)
 	ils.Metrics().EnsureCapacity(mb.metricsCapacity)
+	mb.metricPprofBlockContentions.emit(ils.Metrics())
+	mb.metricPprofBlockDelay.emit(ils.Metrics())
+	mb.metricPprofCPUUtilization.emit(ils.Metrics())
 	mb.metricPprofMemoryAllocatedBytes.emit(ils.Metrics())
 	mb.metricPprofMemoryAllocatedObjects.emit(ils.Metrics())
+	mb.metricPprofMemoryHeapFragmentation.emit(ils.Metrics())
 	mb.metricPprofMemoryInuseBytes.emit(ils.Metrics())
 	mb.metricPprofMemoryInuseObjects.emit(ils.Metrics())
+	mb.metricPprofMemoryObjectAvgSize.emit(ils.Metrics())
 	mb.metricSamplesBeamCount.emit(ils.Metrics())
 	mb.metricSamplesClassification.emit(ils.Metrics())
 	mb.metricSamplesCpythonCount.emit(ils.Metrics())
@@ -1495,6 +1784,21 @@ func (mb *MetricsBuilder) Emit(options ...ResourceMetricsOption) pmetric.Metrics
 	return metrics
 }
 
+// RecordPprofBlockContentionsDataPoint adds a data point to pprof.block.contentions metric.
+func (mb *MetricsBuilder) RecordPprofBlockContentionsDataPoint(ts pcommon.Timestamp, val int64) {
+	mb.metricPprofBlockContentions.recordDataPoint(mb.startTime, ts, val)
+}
+
+// RecordPprofBlockDelayDataPoint adds a data point to pprof.block.delay metric.
+func (mb *MetricsBuilder) RecordPprofBlockDelayDataPoint(ts pcommon.Timestamp, val int64) {
+	mb.metricPprofBlockDelay.recordDataPoint(mb.startTime, ts, val)
+}
+
+// RecordPprofCPUUtilizationDataPoint adds a data point to pprof.cpu.utilization metric.
+func (mb *MetricsBuilder) RecordPprofCPUUtilizationDataPoint(ts pcommon.Timestamp, val float64) {
+	mb.metricPprofCPUUtilization.recordDataPoint(mb.startTime, ts, val)
+}
+
 // RecordPprofMemoryAllocatedBytesDataPoint adds a data point to pprof.memory.allocated.bytes metric.
 func (mb *MetricsBuilder) RecordPprofMemoryAllocatedBytesDataPoint(ts pcommon.Timestamp, val int64) {
 	mb.metricPprofMemoryAllocatedBytes.recordDataPoint(mb.startTime, ts, val)
@@ -1505,6 +1809,11 @@ func (mb *MetricsBuilder) RecordPprofMemoryAllocatedObjectsDataPoint(ts pcommon.
 	mb.metricPprofMemoryAllocatedObjects.recordDataPoint(mb.startTime, ts, val)
 }
 
+// RecordPprofMemoryHeapFragmentationDataPoint adds a data point to pprof.memory.heap.fragmentation metric.
+func (mb *MetricsBuilder) RecordPprofMemoryHeapFragmentationDataPoint(ts pcommon.Timestamp, val float64) {
+	mb.metricPprofMemoryHeapFragmentation.recordDataPoint(mb.startTime, ts, val)
+}
+
 // RecordPprofMemoryInuseBytesDataPoint adds a data point to pprof.memory.inuse.bytes metric.
 func (mb *MetricsBuilder) RecordPprofMemoryInuseBytesDataPoint(ts pcommon.Timestamp, val int64) {
 	mb.metricPprofMemoryInuseBytes.recordDataPoint(mb.startTime, ts, val)
@@ -1513,6 +1822,11 @@ func (mb *MetricsBuilder) RecordPprofMemoryInuseBytesDataPoint(ts pcommon.Timest
 // RecordPprofMemoryInuseObjectsDataPoint adds a data point to pprof.memory.inuse.objects metric.
 func (mb *MetricsBuilder) RecordPprofMemoryInuseObjectsDataPoint(ts pcommon.Timestamp, val int64) {
 	mb.metricPprofMemoryInuseObjects.recordDataPoint(mb.startTime, ts, val)
+}
+
+// RecordPprofMemoryObjectAvgSizeDataPoint adds a data point to pprof.memory.object.avg_size metric.
+func (mb *MetricsBuilder) RecordPprofMemoryObjectAvgSizeDataPoint(ts pcommon.Timestamp, val float64) {
+	mb.metricPprofMemoryObjectAvgSize.recordDataPoint(mb.startTime, ts, val)
 }
 
 // RecordSamplesBeamCountDataPoint adds a data point to samples.beam.count metric.

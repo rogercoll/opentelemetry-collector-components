@@ -26,16 +26,31 @@ func TestMetricsBuilderConfig(t *testing.T) {
 			name: "all_set",
 			want: MetricsBuilderConfig{
 				Metrics: MetricsConfig{
+					PprofBlockContentions: PprofBlockContentionsMetricConfig{
+						Enabled: true,
+					},
+					PprofBlockDelay: PprofBlockDelayMetricConfig{
+						Enabled: true,
+					},
+					PprofCPUUtilization: PprofCPUUtilizationMetricConfig{
+						Enabled: true,
+					},
 					PprofMemoryAllocatedBytes: PprofMemoryAllocatedBytesMetricConfig{
 						Enabled: true,
 					},
 					PprofMemoryAllocatedObjects: PprofMemoryAllocatedObjectsMetricConfig{
 						Enabled: true,
 					},
+					PprofMemoryHeapFragmentation: PprofMemoryHeapFragmentationMetricConfig{
+						Enabled: true,
+					},
 					PprofMemoryInuseBytes: PprofMemoryInuseBytesMetricConfig{
 						Enabled: true,
 					},
 					PprofMemoryInuseObjects: PprofMemoryInuseObjectsMetricConfig{
+						Enabled: true,
+					},
+					PprofMemoryObjectAvgSize: PprofMemoryObjectAvgSizeMetricConfig{
 						Enabled: true,
 					},
 					SamplesBeamCount: SamplesBeamCountMetricConfig{
@@ -99,16 +114,31 @@ func TestMetricsBuilderConfig(t *testing.T) {
 			name: "none_set",
 			want: MetricsBuilderConfig{
 				Metrics: MetricsConfig{
+					PprofBlockContentions: PprofBlockContentionsMetricConfig{
+						Enabled: false,
+					},
+					PprofBlockDelay: PprofBlockDelayMetricConfig{
+						Enabled: false,
+					},
+					PprofCPUUtilization: PprofCPUUtilizationMetricConfig{
+						Enabled: false,
+					},
 					PprofMemoryAllocatedBytes: PprofMemoryAllocatedBytesMetricConfig{
 						Enabled: false,
 					},
 					PprofMemoryAllocatedObjects: PprofMemoryAllocatedObjectsMetricConfig{
 						Enabled: false,
 					},
+					PprofMemoryHeapFragmentation: PprofMemoryHeapFragmentationMetricConfig{
+						Enabled: false,
+					},
 					PprofMemoryInuseBytes: PprofMemoryInuseBytesMetricConfig{
 						Enabled: false,
 					},
 					PprofMemoryInuseObjects: PprofMemoryInuseObjectsMetricConfig{
+						Enabled: false,
+					},
+					PprofMemoryObjectAvgSize: PprofMemoryObjectAvgSizeMetricConfig{
 						Enabled: false,
 					},
 					SamplesBeamCount: SamplesBeamCountMetricConfig{
@@ -172,7 +202,7 @@ func TestMetricsBuilderConfig(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			cfg := loadMetricsBuilderConfig(t, tt.name)
-			diff := cmp.Diff(tt.want, cfg, cmpopts.IgnoreUnexported(PprofMemoryAllocatedBytesMetricConfig{}, PprofMemoryAllocatedObjectsMetricConfig{}, PprofMemoryInuseBytesMetricConfig{}, PprofMemoryInuseObjectsMetricConfig{}, SamplesBeamCountMetricConfig{}, SamplesClassificationMetricConfig{}, SamplesCpythonCountMetricConfig{}, SamplesCustomAggregationMetricConfig{}, SamplesDotnetCountMetricConfig{}, SamplesFrameTypeMetricConfig{}, SamplesGoCountMetricConfig{}, SamplesJvmCountMetricConfig{}, SamplesKernelCountMetricConfig{}, SamplesNativeCountMetricConfig{}, SamplesPerlCountMetricConfig{}, SamplesPhpCountMetricConfig{}, SamplesRubyCountMetricConfig{}, SamplesRustCountMetricConfig{}, SamplesUserCountMetricConfig{}, SamplesV8jsCountMetricConfig{}))
+			diff := cmp.Diff(tt.want, cfg, cmpopts.IgnoreUnexported(PprofBlockContentionsMetricConfig{}, PprofBlockDelayMetricConfig{}, PprofCPUUtilizationMetricConfig{}, PprofMemoryAllocatedBytesMetricConfig{}, PprofMemoryAllocatedObjectsMetricConfig{}, PprofMemoryHeapFragmentationMetricConfig{}, PprofMemoryInuseBytesMetricConfig{}, PprofMemoryInuseObjectsMetricConfig{}, PprofMemoryObjectAvgSizeMetricConfig{}, SamplesBeamCountMetricConfig{}, SamplesClassificationMetricConfig{}, SamplesCpythonCountMetricConfig{}, SamplesCustomAggregationMetricConfig{}, SamplesDotnetCountMetricConfig{}, SamplesFrameTypeMetricConfig{}, SamplesGoCountMetricConfig{}, SamplesJvmCountMetricConfig{}, SamplesKernelCountMetricConfig{}, SamplesNativeCountMetricConfig{}, SamplesPerlCountMetricConfig{}, SamplesPhpCountMetricConfig{}, SamplesRubyCountMetricConfig{}, SamplesRustCountMetricConfig{}, SamplesUserCountMetricConfig{}, SamplesV8jsCountMetricConfig{}))
 			require.Emptyf(t, diff, "Config mismatch (-expected +actual):\n%s", diff)
 		})
 	}

@@ -1,13 +1,23 @@
 default:
 all_set:
   metrics:
+    pprof.block.contentions:
+      enabled: true
+    pprof.block.delay:
+      enabled: true
+    pprof.cpu.utilization:
+      enabled: true
     pprof.memory.allocated.bytes:
       enabled: true
     pprof.memory.allocated.objects:
       enabled: true
+    pprof.memory.heap.fragmentation:
+      enabled: true
     pprof.memory.inuse.bytes:
       enabled: true
     pprof.memory.inuse.objects:
+      enabled: true
+    pprof.memory.object.avg_size:
       enabled: true
     samples.beam.count:
       enabled: true
@@ -46,13 +56,23 @@ all_set:
       enabled: true
 reaggregate_set:
   metrics:
+    pprof.block.contentions:
+      enabled: true
+    pprof.block.delay:
+      enabled: true
+    pprof.cpu.utilization:
+      enabled: true
     pprof.memory.allocated.bytes:
       enabled: true
     pprof.memory.allocated.objects:
       enabled: true
+    pprof.memory.heap.fragmentation:
+      enabled: true
     pprof.memory.inuse.bytes:
       enabled: true
     pprof.memory.inuse.objects:
+      enabled: true
+    pprof.memory.object.avg_size:
       enabled: true
     samples.beam.count:
       enabled: true
@@ -91,13 +111,23 @@ reaggregate_set:
       enabled: true
 none_set:
   metrics:
+    pprof.block.contentions:
+      enabled: false
+    pprof.block.delay:
+      enabled: false
+    pprof.cpu.utilization:
+      enabled: false
     pprof.memory.allocated.bytes:
       enabled: false
     pprof.memory.allocated.objects:
       enabled: false
+    pprof.memory.heap.fragmentation:
+      enabled: false
     pprof.memory.inuse.bytes:
       enabled: false
     pprof.memory.inuse.objects:
+      enabled: false
+    pprof.memory.object.avg_size:
       enabled: false
     samples.beam.count:
       enabled: false

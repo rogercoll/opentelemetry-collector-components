@@ -148,25 +148,17 @@ func (c *profilesToMetricsConnector) extractMetricsFromProfiles(ctx context.Cont
 	return nil
 }
 
+type pprofProfileData struct {
+	total    int64
+	ts       pcommon.Timestamp
+	duration int64
+}
+
 func (c *profilesToMetricsConnector) extractMetricsFromPprofProfiles(dictionary pprofile.ProfilesDictionary, scopeProfile pprofile.ScopeProfiles) {
+	collected := make(map[string]pprofProfileData)
+
 	for _, profile := range scopeProfile.Profiles().All() {
-		st := profile.SampleType()
-		typStr := dictionary.StringTable().At(int(st.TypeStrindex()))
-
-		var record func(pcommon.Timestamp, int64)
-
-		switch typStr {
-		case "alloc_objects":
-			record = c.mb.RecordPprofMemoryAllocatedObjectsDataPoint
-		case "alloc_space":
-			record = c.mb.RecordPprofMemoryAllocatedBytesDataPoint
-		case "inuse_objects":
-			record = c.mb.RecordPprofMemoryInuseObjectsDataPoint
-		case "inuse_space":
-			record = c.mb.RecordPprofMemoryInuseBytesDataPoint
-		default:
-			continue
-		}
+		typStr := dictionary.StringTable().At(int(profile.SampleType().TypeStrindex()))
 
 		var total int64
 		for _, sample := range profile.Samples().All() {
@@ -174,8 +166,50 @@ func (c *profilesToMetricsConnector) extractMetricsFromPprofProfiles(dictionary 
 				total += sample.Values().At(0)
 			}
 		}
+		collected[typStr] = pprofProfileData{
+			total:    total,
+			ts:       profile.Time(),
+			duration: int64(profile.DurationNano()),
+		}
+	}
 
-		record(profile.Time(), total)
+	// Heap metrics
+	if d, ok := collected["alloc_objects"]; ok {
+		c.mb.RecordPprofMemoryAllocatedObjectsDataPoint(d.ts, d.total)
+	}
+	if d, ok := collected["alloc_space"]; ok {
+		c.mb.RecordPprofMemoryAllocatedBytesDataPoint(d.ts, d.total)
+	}
+	if d, ok := collected["inuse_objects"]; ok {
+		c.mb.RecordPprofMemoryInuseObjectsDataPoint(d.ts, d.total)
+	}
+	if d, ok := collected["inuse_space"]; ok {
+		c.mb.RecordPprofMemoryInuseBytesDataPoint(d.ts, d.total)
+	}
+
+	// CPU metrics
+	if d, ok := collected["cpu"]; ok && d.duration > 0 {
+		c.mb.RecordPprofCPUUtilizationDataPoint(d.ts, float64(d.total)/float64(d.duration))
+	}
+
+	// Block/mutex metrics
+	if d, ok := collected["contentions"]; ok {
+		c.mb.RecordPprofBlockContentionsDataPoint(d.ts, d.total)
+	}
+	if d, ok := collected["delay"]; ok {
+		c.mb.RecordPprofBlockDelayDataPoint(d.ts, d.total)
+	}
+
+	// Derived heap metrics
+	inuse, hasInuse := collected["inuse_space"]
+	alloc, hasAlloc := collected["alloc_space"]
+	inuseObjs, hasInuseObjs := collected["inuse_objects"]
+
+	if hasInuse && hasAlloc && alloc.total > 0 {
+		c.mb.RecordPprofMemoryHeapFragmentationDataPoint(inuse.ts, float64(inuse.total)/float64(alloc.total))
+	}
+	if hasInuse && hasInuseObjs && inuseObjs.total > 0 {
+		c.mb.RecordPprofMemoryObjectAvgSizeDataPoint(inuse.ts, float64(inuse.total)/float64(inuseObjs.total))
 	}
 }
 

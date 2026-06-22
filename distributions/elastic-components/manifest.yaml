@@ -21,11 +21,13 @@ extensions:
 connectors:
   - gomod: github.com/elastic/opentelemetry-collector-components/connector/elasticapmconnector v0.59.0
   - gomod: github.com/elastic/opentelemetry-collector-components/connector/dynamicroutingconnector v0.59.0
+  - gomod: github.com/elastic/opentelemetry-collector-components/connector/profilingmetricsconnector v0.59.0
 
 converters:
 
 receivers:
   - gomod: go.opentelemetry.io/collector/receiver/nopreceiver v0.154.0
+  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/receiver/pprofreceiver v0.154.0
   - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/receiver/jaegerreceiver v0.154.0
   - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/receiver/prometheusreceiver v0.154.0
   - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/receiver/zipkinreceiver v0.154.0
@@ -89,9 +91,11 @@ replaces:
   - github.com/elastic/opentelemetry-collector-components/extension/clientaddrmiddlewareextension => ../extension/clientaddrmiddlewareextension
   - github.com/elastic/opentelemetry-collector-components/connector/elasticapmconnector => ../connector/elasticapmconnector
   - github.com/elastic/opentelemetry-collector-components/connector/dynamicroutingconnector => ../connector/dynamicroutingconnector
+  - github.com/elastic/opentelemetry-collector-components/connector/profilingmetricsconnector => ../connector/profilingmetricsconnector
   - github.com/elastic/opentelemetry-collector-components/receiver/elasticapmintakereceiver => ../receiver/elasticapmintakereceiver
   - github.com/elastic/opentelemetry-collector-components/receiver/integrationreceiver => ../receiver/integrationreceiver
   - github.com/elastic/opentelemetry-collector-components/receiver/entityanalyticsreceiver => ../receiver/entityanalyticsreceiver
   - github.com/elastic/opentelemetry-collector-components/receiver/akamaisiemreceiver => ../receiver/akamaisiemreceiver
   - github.com/elastic/opentelemetry-collector-components/processor/elastictraceprocessor => ../processor/elastictraceprocessor
   - github.com/elastic/opentelemetry-collector-components/internal/elasticattr => ../internal/elasticattr
+  - github.com/open-telemetry/opentelemetry-collector-contrib/receiver/pprofreceiver => /home/neck/Documents/github/rogercoll/opentelemetry-collector-contrib/receiver/pprofreceiver/

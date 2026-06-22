@@ -12,6 +12,14 @@ metrics:
     enabled: false
 ```
 
+### pprof.cpu.utilization
+
+Fraction of wall time spent on CPU during the profiling window.
+
+| Unit | Metric Type | Value Type | Stability |
+| ---- | ----------- | ---------- | --------- |
+| 1 | Gauge | Double | Development |
+
 ### pprof.memory.allocated.bytes
 
 Total bytes allocated since program start.
@@ -187,6 +195,38 @@ metrics:
   <metric_name>:
     enabled: true
 ```
+
+### pprof.block.contentions
+
+Total number of lock contention events since program start.
+
+| Unit | Metric Type | Value Type | Aggregation Temporality | Monotonic | Stability |
+| ---- | ----------- | ---------- | ----------------------- | --------- | --------- |
+| 1 | Sum | Int | Cumulative | true | Development |
+
+### pprof.block.delay
+
+Total time spent blocked on locks since program start.
+
+| Unit | Metric Type | Value Type | Aggregation Temporality | Monotonic | Stability |
+| ---- | ----------- | ---------- | ----------------------- | --------- | --------- |
+| ns | Sum | Int | Cumulative | true | Development |
+
+### pprof.memory.heap.fragmentation
+
+Ratio of live heap bytes to total allocated bytes. Trending toward 1 indicates a potential memory leak.
+
+| Unit | Metric Type | Value Type | Stability |
+| ---- | ----------- | ---------- | --------- |
+| 1 | Gauge | Double | Development |
+
+### pprof.memory.object.avg_size
+
+Average size in bytes of live heap objects.
+
+| Unit | Metric Type | Value Type | Stability |
+| ---- | ----------- | ---------- | --------- |
+| By | Gauge | Double | Development |
 
 ### samples.classification
 

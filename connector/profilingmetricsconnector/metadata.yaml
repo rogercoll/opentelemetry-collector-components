@@ -47,6 +47,34 @@ attributes:
     requirement_level: conditionally_required
 
 metrics:
+  pprof.block.contentions:
+    enabled: false
+    description: Total number of lock contention events since program start.
+    unit: "1"
+    stability: development
+    sum:
+      value_type: int
+      aggregation_temporality: cumulative
+      monotonic: true
+
+  pprof.block.delay:
+    enabled: false
+    description: Total time spent blocked on locks since program start.
+    unit: ns
+    stability: development
+    sum:
+      value_type: int
+      aggregation_temporality: cumulative
+      monotonic: true
+
+  pprof.cpu.utilization:
+    enabled: true
+    description: Fraction of wall time spent on CPU during the profiling window.
+    unit: "1"
+    stability: development
+    gauge:
+      value_type: double
+
   pprof.memory.allocated.bytes:
     enabled: true
     description: Total bytes allocated since program start.
@@ -67,6 +95,14 @@ metrics:
       aggregation_temporality: cumulative
       monotonic: true
 
+  pprof.memory.heap.fragmentation:
+    enabled: false
+    description: Ratio of live heap bytes to total allocated bytes. Trending toward 1 indicates a potential memory leak.
+    unit: "1"
+    stability: development
+    gauge:
+      value_type: double
+
   pprof.memory.inuse.bytes:
     enabled: true
     description: Bytes currently live in the heap.
@@ -82,6 +118,14 @@ metrics:
     stability: development
     gauge:
       value_type: int
+
+  pprof.memory.object.avg_size:
+    enabled: false
+    description: Average size in bytes of live heap objects.
+    unit: By
+    stability: development
+    gauge:
+      value_type: double
 
   samples.beam.count:
     enabled: true

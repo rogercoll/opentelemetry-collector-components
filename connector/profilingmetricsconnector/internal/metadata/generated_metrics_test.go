@@ -70,6 +70,16 @@ func TestMetricsBuilder(t *testing.T) {
 			defaultMetricsCount := 0
 			allMetricsCount := 0
 
+			allMetricsCount++
+			mb.RecordPprofBlockContentionsDataPoint(ts, 1)
+
+			allMetricsCount++
+			mb.RecordPprofBlockDelayDataPoint(ts, 1)
+
+			defaultMetricsCount++
+			allMetricsCount++
+			mb.RecordPprofCPUUtilizationDataPoint(ts, 1)
+
 			defaultMetricsCount++
 			allMetricsCount++
 			mb.RecordPprofMemoryAllocatedBytesDataPoint(ts, 1)
@@ -78,6 +88,9 @@ func TestMetricsBuilder(t *testing.T) {
 			allMetricsCount++
 			mb.RecordPprofMemoryAllocatedObjectsDataPoint(ts, 1)
 
+			allMetricsCount++
+			mb.RecordPprofMemoryHeapFragmentationDataPoint(ts, 1)
+
 			defaultMetricsCount++
 			allMetricsCount++
 			mb.RecordPprofMemoryInuseBytesDataPoint(ts, 1)
@@ -85,6 +98,9 @@ func TestMetricsBuilder(t *testing.T) {
 			defaultMetricsCount++
 			allMetricsCount++
 			mb.RecordPprofMemoryInuseObjectsDataPoint(ts, 1)
+
+			allMetricsCount++
+			mb.RecordPprofMemoryObjectAvgSizeDataPoint(ts, 1)
 
 			defaultMetricsCount++
 			allMetricsCount++
@@ -190,6 +206,46 @@ func TestMetricsBuilder(t *testing.T) {
 			validatedMetrics := make(map[string]bool)
 			for _, mi := range allMetricsList {
 				switch mi.Name() {
+				case "pprof.block.contentions":
+					assert.False(t, validatedMetrics["pprof.block.contentions"], "Found a duplicate in the metrics slice: pprof.block.contentions")
+					validatedMetrics["pprof.block.contentions"] = true
+					assert.Equal(t, pmetric.MetricTypeSum, mi.Type())
+					assert.Equal(t, 1, mi.Sum().DataPoints().Len())
+					assert.Equal(t, "Total number of lock contention events since program start.", mi.Description())
+					assert.Equal(t, "1", mi.Unit())
+					assert.True(t, mi.Sum().IsMonotonic())
+					assert.Equal(t, pmetric.AggregationTemporalityCumulative, mi.Sum().AggregationTemporality())
+					dp := mi.Sum().DataPoints().At(0)
+					assert.Equal(t, start, dp.StartTimestamp())
+					assert.Equal(t, ts, dp.Timestamp())
+					assert.Equal(t, pmetric.NumberDataPointValueTypeInt, dp.ValueType())
+					assert.Equal(t, int64(1), dp.IntValue())
+				case "pprof.block.delay":
+					assert.False(t, validatedMetrics["pprof.block.delay"], "Found a duplicate in the metrics slice: pprof.block.delay")
+					validatedMetrics["pprof.block.delay"] = true
+					assert.Equal(t, pmetric.MetricTypeSum, mi.Type())
+					assert.Equal(t, 1, mi.Sum().DataPoints().Len())
+					assert.Equal(t, "Total time spent blocked on locks since program start.", mi.Description())
+					assert.Equal(t, "ns", mi.Unit())
+					assert.True(t, mi.Sum().IsMonotonic())
+					assert.Equal(t, pmetric.AggregationTemporalityCumulative, mi.Sum().AggregationTemporality())
+					dp := mi.Sum().DataPoints().At(0)
+					assert.Equal(t, start, dp.StartTimestamp())
+					assert.Equal(t, ts, dp.Timestamp())
+					assert.Equal(t, pmetric.NumberDataPointValueTypeInt, dp.ValueType())
+					assert.Equal(t, int64(1), dp.IntValue())
+				case "pprof.cpu.utilization":
+					assert.False(t, validatedMetrics["pprof.cpu.utilization"], "Found a duplicate in the metrics slice: pprof.cpu.utilization")
+					validatedMetrics["pprof.cpu.utilization"] = true
+					assert.Equal(t, pmetric.MetricTypeGauge, mi.Type())
+					assert.Equal(t, 1, mi.Gauge().DataPoints().Len())
+					assert.Equal(t, "Fraction of wall time spent on CPU during the profiling window.", mi.Description())
+					assert.Equal(t, "1", mi.Unit())
+					dp := mi.Gauge().DataPoints().At(0)
+					assert.Equal(t, start, dp.StartTimestamp())
+					assert.Equal(t, ts, dp.Timestamp())
+					assert.Equal(t, pmetric.NumberDataPointValueTypeDouble, dp.ValueType())
+					assert.InDelta(t, float64(1), dp.DoubleValue(), 0.01)
 				case "pprof.memory.allocated.bytes":
 					assert.False(t, validatedMetrics["pprof.memory.allocated.bytes"], "Found a duplicate in the metrics slice: pprof.memory.allocated.bytes")
 					validatedMetrics["pprof.memory.allocated.bytes"] = true
@@ -218,6 +274,18 @@ func TestMetricsBuilder(t *testing.T) {
 					assert.Equal(t, ts, dp.Timestamp())
 					assert.Equal(t, pmetric.NumberDataPointValueTypeInt, dp.ValueType())
 					assert.Equal(t, int64(1), dp.IntValue())
+				case "pprof.memory.heap.fragmentation":
+					assert.False(t, validatedMetrics["pprof.memory.heap.fragmentation"], "Found a duplicate in the metrics slice: pprof.memory.heap.fragmentation")
+					validatedMetrics["pprof.memory.heap.fragmentation"] = true
+					assert.Equal(t, pmetric.MetricTypeGauge, mi.Type())
+					assert.Equal(t, 1, mi.Gauge().DataPoints().Len())
+					assert.Equal(t, "Ratio of live heap bytes to total allocated bytes. Trending toward 1 indicates a potential memory leak.", mi.Description())
+					assert.Equal(t, "1", mi.Unit())
+					dp := mi.Gauge().DataPoints().At(0)
+					assert.Equal(t, start, dp.StartTimestamp())
+					assert.Equal(t, ts, dp.Timestamp())
+					assert.Equal(t, pmetric.NumberDataPointValueTypeDouble, dp.ValueType())
+					assert.InDelta(t, float64(1), dp.DoubleValue(), 0.01)
 				case "pprof.memory.inuse.bytes":
 					assert.False(t, validatedMetrics["pprof.memory.inuse.bytes"], "Found a duplicate in the metrics slice: pprof.memory.inuse.bytes")
 					validatedMetrics["pprof.memory.inuse.bytes"] = true
@@ -242,6 +310,18 @@ func TestMetricsBuilder(t *testing.T) {
 					assert.Equal(t, ts, dp.Timestamp())
 					assert.Equal(t, pmetric.NumberDataPointValueTypeInt, dp.ValueType())
 					assert.Equal(t, int64(1), dp.IntValue())
+				case "pprof.memory.object.avg_size":
+					assert.False(t, validatedMetrics["pprof.memory.object.avg_size"], "Found a duplicate in the metrics slice: pprof.memory.object.avg_size")
+					validatedMetrics["pprof.memory.object.avg_size"] = true
+					assert.Equal(t, pmetric.MetricTypeGauge, mi.Type())
+					assert.Equal(t, 1, mi.Gauge().DataPoints().Len())
+					assert.Equal(t, "Average size in bytes of live heap objects.", mi.Description())
+					assert.Equal(t, "By", mi.Unit())
+					dp := mi.Gauge().DataPoints().At(0)
+					assert.Equal(t, start, dp.StartTimestamp())
+					assert.Equal(t, ts, dp.Timestamp())
+					assert.Equal(t, pmetric.NumberDataPointValueTypeDouble, dp.ValueType())
+					assert.InDelta(t, float64(1), dp.DoubleValue(), 0.01)
 				case "samples.beam.count":
 					assert.False(t, validatedMetrics["samples.beam.count"], "Found a duplicate in the metrics slice: samples.beam.count")
 					validatedMetrics["samples.beam.count"] = true
